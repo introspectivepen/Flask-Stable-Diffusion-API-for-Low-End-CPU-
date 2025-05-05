@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stable Bud | AI Image Generator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #8A2BE2;
+      --primary-light: #9D4EDD;
+      --secondary: #06D6A0;
+      --dark: #121212;
+      --darker: #0a0a0a;
+      --light: #F8F9FA;
+      --gray: #495057;
+      --card: rgba(255, 255, 255, 0.05);
+      --card-hover: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+      color: var(--light);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      padding: 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--light);
+    }
+
+    .logo span {
+      color: var(--secondary);
+    }
+
+    .logo-icon {
+      background: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    nav ul {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    nav a {
+      color: var(--light);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    nav a:hover {
+      color: var(--secondary);
+    }
+
+    nav a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background-color: var(--secondary);
+      transition: width 0.3s ease;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 60px 0 40px;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: #aaa;
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+
+    .prompt-container {
+      background: var(--card);
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px;
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .prompt-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to bottom right,
+        rgba(138, 43, 226, 0.1),
+        transparent,
+        rgba(6, 214, 160, 0.1)
+      );
+      transform: rotate(30deg);
+      pointer-events: none;
+    }
+
+    .prompt-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+
+    .input-group {
+      display: flex;
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    #prompt {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--light);
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    #prompt:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.3);
+    }
+
+    #prompt::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    button {
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.7s ease;
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(138, 43, 226, 0.3);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .results {
+      padding: 60px 0;
+    }
+
+    .result-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .image-container {
+      position: relative;
+      margin: 0 auto;
+      max-width: 512px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .image-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 24px;
+      background: linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.6));
+      pointer-events: none;
+    }
+
+    .image-container:hover {
+      transform: scale(1.02);
+    }
+
+    #result {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      border-radius: 24px;
+      transition: all 0.5s ease;
+    }
+
+    .image-actions {
+      position: absolute;
+      bottom: 16px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      z-index: 2;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+    }
+
+    .image-container:hover .image-actions {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .action-btn {
+      background: rgba(0, 0, 0, 0.6);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 40px 0;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--secondary);
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .placeholder-text {
+      font-size: 14px;
+      color: #888;
+      margin-top: 16px;
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 40px 0;
+      margin-top: 40px;
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--light);
+    }
+
+    .footer-logo span {
+      color: var(--secondary);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      color: #aaa;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      font-size: 14px;
+    }
+
+    .footer-links a:hover {
+      color: var(--secondary);
+    }
+
+    .copyright {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-top: 32px;
+    }
+
+    /* Responsiveness */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 36px;
+      }
+      
+      .prompt-container {
+        padding: 24px;
+      }
+      
+      .footer-content {
+        flex-direction: column;
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 28px;
+      }
+      
+      .subtitle {
+        font-size: 16px;
+      }
+      
+      nav ul {
+        gap: 16px;
+      }
+      
+      .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    .delay-1 {
+      animation-delay: 0.1s;
+    }
+
+    .delay-2 {
+      animation-delay: 0.2s;
+    }
+
+    .delay-3 {
+      animation-delay: 0.3s;
+    }
+
+    /* For empty image placeholder */
+    .placeholder-image {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 400px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 24px;
+      color: #aaa;
+      font-size: 16px;
+    }
+
+    .error-message {
+      color: #ff5555;
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-wand-magic-sparkles"></i>
+        </div>
+        Stable<span>Bud</span>
+      </div>
+      <nav>
+        <ul>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1 class="fade-in">Turn Your Words into Stunning Art</h1>
+      <p class="subtitle fade-in delay-1">Create beautiful, unique AI-generated images in seconds with StableBud's powerful image generation engine.</p>
+    </div>
+  </section>
+
+  <section class="generator">
+    <div class="container">
+      <div class="prompt-container fade-in delay-2">
+        <div class="input-group">
+          <input type="text" id="prompt" placeholder="Describe the image you want to create..." />
+        </div>
+        
+        <button onclick="generate()">
+          <i class="fas fa-sparkles"></i> Generate Image
+        </button>
+        <div id="error-message" class="error-message"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="loading" id="loading-indicator">
+    <div class="spinner"></div>
+    <p class="placeholder-text">Creating your masterpiece...</p>
+  </div>
+
+  <section class="results fade-in delay-3">
+    <div class="container">
+      <div class="result-container">
+        <div class="image-container" id="image-container">
+          <div class="placeholder-image" id="placeholder">
+            <div>
+              <i class="fas fa-image" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+              <p>Your generated image will appear here</p>
+            </div>
+          </div>
+          <img id="result" src="" alt="" style="display: none;" />
+          <div class="image-actions">
+            <button class="action-btn" onclick="downloadImage()">
+              <i class="fas fa-download"></i> Download
+            </button>
+            <button class="action-btn" onclick="shareImage()">
+              <i class="fas fa-share-alt"></i> Share
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-logo">
+          Stable<span>Bud</span>
+        </div>
+        <div class="footer-links">
+          <a href="#">Terms of Service</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Contact</a>
+          <a href="#">About</a>
+        </div>
+      </div>
+      <div class="copyright">
+        © 2025 StableBud. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Show placeholder initially
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('placeholder').style.display = 'flex';
+      document.getElementById('result').style.display = 'none';
+    });
+
+    async function generate() {
+      const prompt = document.getElementById("prompt").value;
+      const errorMessageDiv = document.getElementById("error-message");
+      errorMessageDiv.textContent = ''; // Clear previous error messages
+      
+      if (!prompt) {
+        errorMessageDiv.textContent = "Please enter a prompt to generate an image.";
+        return;
+      }
+      
+      // Show loading indicator
+      const loadingIndicator = document.getElementById("loading-indicator");
+      loadingIndicator.style.display = "block";
+      
+      // Hide placeholder, will show image when ready
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('result').style.display = 'none';
+      
+      try {
+        const response = await fetch("http://localhost:5000/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+        
+        if (response.ok) {
+          const blob = await response.blob();
+          const imgUrl = URL.createObjectURL(blob);
+          const resultImg = document.getElementById("result");
+          resultImg.src = imgUrl;
+          resultImg.style.display = "block";
+          resultImg.onload = function() {
+            // Scroll to result image
+            document.getElementById('image-container').scrollIntoView({
+              behavior: 'smooth'
+            });
+          };
+        } else {
+          const errorData = await response.json();
+          errorMessageDiv.textContent = errorData.error || "Error generating image. Please try again.";
+          document.getElementById('placeholder').style.display = 'flex';
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        errorMessageDiv.textContent = "Error connecting to the server. Please ensure the backend is running at http://localhost:5000.";
+        document.getElementById('placeholder').style.display = 'flex';
+      } finally {
+        // Hide loading indicator
+        loadingIndicator.style.display = "none";
+      }
+    }
+    
+    function downloadImage() {
+      const img = document.getElementById('result');
+      if (img.src) {
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = 'stablebud-creation.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    }
+    
+    function shareImage() {
+      alert('Sharing functionality would be implemented here!');
+    }
+  </script>
+</body>
+</html>
